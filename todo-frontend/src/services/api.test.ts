@@ -43,7 +43,15 @@ describe('API Service', () => {
     test('login should call login method with correct parameters', async () => {
       const mockResponse = {
         token: 'mock-token',
-        user: { id: '1', email: 'test@example.com', firstName: 'Test', lastName: 'User' }
+        expiration: '2024-01-01T00:00:00Z',
+        user: { 
+          id: '1', 
+          email: 'test@example.com', 
+          firstName: 'Test', 
+          lastName: 'User',
+          fullName: 'Test User',
+          createdAt: '2023-01-01T00:00:00Z'
+        }
       };
       mockApiService.login.mockResolvedValue(mockResponse);
 
@@ -57,7 +65,15 @@ describe('API Service', () => {
     test('register should call register method with correct parameters', async () => {
       const mockResponse = {
         token: 'mock-token',
-        user: { id: '1', email: 'test@example.com', firstName: 'Test', lastName: 'User' }
+        expiration: '2024-01-01T00:00:00Z',
+        user: { 
+          id: '1', 
+          email: 'test@example.com', 
+          firstName: 'Test', 
+          lastName: 'User',
+          fullName: 'Test User',
+          createdAt: '2023-01-01T00:00:00Z'
+        }
       };
       mockApiService.register.mockResolvedValue(mockResponse);
 
@@ -84,13 +100,19 @@ describe('API Service', () => {
             description: 'Test Description',
             isCompleted: false,
             priority: Priority.Medium,
+            priorityName: 'Medium',
+            isOverdue: false,
+            daysUntilDue: 0,
             createdAt: '2023-01-01T00:00:00Z',
             updatedAt: '2023-01-01T00:00:00Z'
           }
         ],
         totalCount: 1,
         page: 1,
-        pageSize: 20
+        pageSize: 20,
+        totalPages: 1,
+        hasPreviousPage: false,
+        hasNextPage: false
       };
       mockApiService.getTodos.mockResolvedValue(mockResponse);
 
@@ -108,6 +130,9 @@ describe('API Service', () => {
         description: 'New Description',
         isCompleted: false,
         priority: Priority.High,
+        priorityName: 'High',
+        isOverdue: false,
+        daysUntilDue: 0,
         createdAt: '2023-01-01T00:00:00Z',
         updatedAt: '2023-01-01T00:00:00Z'
       };
@@ -152,7 +177,9 @@ describe('API Service', () => {
           name: 'Work',
           description: 'Work tasks',
           color: '#3B82F6',
-          createdAt: '2023-01-01T00:00:00Z'
+          createdAt: '2023-01-01T00:00:00Z',
+          updatedAt: '2023-01-01T00:00:00Z',
+          todoItemsCount: 5
         }
       ];
       mockApiService.getCategories.mockResolvedValue(mockResponse);
@@ -169,7 +196,9 @@ describe('API Service', () => {
         name: 'New Category',
         description: 'New Description',
         color: '#10B981',
-        createdAt: '2023-01-01T00:00:00Z'
+        createdAt: '2023-01-01T00:00:00Z',
+        updatedAt: '2023-01-01T00:00:00Z',
+        todoItemsCount: 0
       };
       mockApiService.createCategory.mockResolvedValue(mockResponse);
 
