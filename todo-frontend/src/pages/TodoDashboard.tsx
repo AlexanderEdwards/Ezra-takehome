@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { TodoItem, CreateTodoRequest, UpdateTodoRequest, Category, TodoQuery, Priority } from '../types';
+import { TodoItem, CreateTodoRequest, UpdateTodoRequest, Category, TodoQuery, Priority, CreateCategoryRequest } from '../types';
 import { apiService } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import CategoryModal from '../components/CategoryModal';
 import { useAuth } from '../hooks/useAuth';
 
 const TodoDashboard: React.FC = () => {
@@ -25,6 +26,7 @@ const TodoDashboard: React.FC = () => {
   
   // State for modal and forms
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
   const [newTodo, setNewTodo] = useState<CreateTodoRequest>({
     title: '',
@@ -140,6 +142,18 @@ const TodoDashboard: React.FC = () => {
     onError: (error: any) => {
       console.error('Delete mutation error:', error);
       toast.error(error.response?.data?.message || 'Failed to delete todo');
+    }
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: (category: CreateCategoryRequest) => apiService.createCategory(category),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      setIsCategoryModalOpen(false);
+      toast.success('Category created successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to create category');
     }
   });
 
@@ -429,14 +443,21 @@ const TodoDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Add Todo Button */}
-        <div className="mb-6">
+        {/* Action Buttons */}
+        <div className="mb-6 flex items-center gap-3">
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
           >
             <span>+</span>
             Add New Todo
+          </button>
+          <button
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
+          >
+            <span>🏷️</span>
+            Create Category
           </button>
         </div>
 
@@ -755,6 +776,10 @@ const TodoDashboard: React.FC = () => {
                         if (formErrors.dueDate) {
                           setFormErrors({ ...formErrors, dueDate: undefined });
                         }
+                        // Auto-close the date picker by blurring the input
+                        if (e.target.value) {
+                          e.target.blur();
+                        }
                       }}
                       min={new Date().toISOString().slice(0, 16)} // Prevent past dates in the picker
                     />
@@ -875,7 +900,13 @@ const TodoDashboard: React.FC = () => {
                       type="datetime-local"
                       className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                       value={editingTodo.dueDate ? new Date(editingTodo.dueDate).toISOString().slice(0, 16) : ''}
-                      onChange={(e) => setEditingTodo({ ...editingTodo, dueDate: e.target.value })}
+                      onChange={(e) => {
+                        setEditingTodo({ ...editingTodo, dueDate: e.target.value });
+                        // Auto-close the date picker by blurring the input
+                        if (e.target.value) {
+                          e.target.blur();
+                        }
+                      }}
                     />
                   </div>
                 </div>
@@ -906,6 +937,14 @@ const TodoDashboard: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Category Creation Modal */}
+        <CategoryModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onSubmit={createCategoryMutation.mutate}
+          isLoading={createCategoryMutation.isPending}
+        />
       </div>
     </div>
   );
