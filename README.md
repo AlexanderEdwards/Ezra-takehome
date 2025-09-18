@@ -9,7 +9,6 @@ A comprehensive todo management application built with .NET Core Web API backend
 - **Database**: SQLite with Entity Framework Core
 - **Authentication**: JWT Bearer tokens with ASP.NET Core Identity
 - **Logging**: Serilog with console and file sinks
-- **Validation**: FluentValidation
 - **Documentation**: Swagger/OpenAPI
 
 ### Frontend (React 18 + TypeScript)
@@ -151,79 +150,6 @@ dotnet --version
    npm run build
    ```
 
-## 🔧 Configuration
-
-### Backend Configuration (appsettings.json)
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=todoapp.db"
-  },
-  "JwtSettings": {
-    "SecretKey": "YourSuperSecretKeyThatIsAtLeast32CharactersLongForProduction",
-    "Issuer": "TodoApi",
-    "Audience": "TodoApp",
-    "ExpirationHours": "24"
-  }
-}
-```
-
-### Frontend Configuration
-The application automatically uses HTTP for development and HTTPS for production. 
-
-For custom configuration, create a `.env` file in the `todo-frontend` directory:
-```env
-# For development (optional - defaults to HTTP)
-REACT_APP_API_URL=http://localhost:5001/api
-
-# For production (use HTTPS)
-REACT_APP_API_URL=https://your-api-domain.com/api
-```
-
-**SSL Certificate Setup for Development:**
-The application uses HTTPS by default. To avoid certificate errors:
-```bash
-dotnet dev-certs https --trust
-```
-
-**Troubleshooting Certificate Issues:**
-- **macOS/Linux**: Run the trust command above and enter your password when prompted
-- **Windows**: Run as Administrator: `dotnet dev-certs https --trust`
-- **Still having issues?**: Clear and recreate certificates:
-  ```bash
-  dotnet dev-certs https --clean
-  dotnet dev-certs https --trust
-  ```
-
-## 🧪 Testing HTTP Fallback
-
-To test the HTTP fallback functionality:
-
-### **Method 1: Environment Variable**
-```bash
-# Test HTTP fallback
-cp .env.http .env
-npm start
-
-# Test HTTPS (normal)
-cp .env.https .env
-npm start
-```
-
-### **Method 2: Direct URL Override**
-```bash
-# Start with HTTP
-REACT_APP_API_URL=http://localhost:5001/api npm start
-
-# Start with HTTPS
-REACT_APP_API_URL=https://localhost:7001/api npm start
-```
-
-### **Method 3: Browser Testing**
-1. Start API with both endpoints: `dotnet run --urls="https://localhost:7001;http://localhost:5001"`
-2. Test HTTPS: Open `https://localhost:7001` in browser
-3. Test HTTP: Open `http://localhost:5001` in browser
-4. Frontend automatically uses HTTPS by default, HTTP when specified
 
 ## 📊 API Endpoints
 
