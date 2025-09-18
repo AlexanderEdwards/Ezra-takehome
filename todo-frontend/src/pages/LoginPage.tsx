@@ -5,7 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('admin@todoapp.com');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('Admin123!');
   const [errors, setErrors] = useState({
     email: '',
     password: '',
@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  // Real-time validation and clear login errors when user types
+  // Real-time validation
   useEffect(() => {
     if (touched.email) {
       setErrors(prev => ({ ...prev, email: validateField('email', email) }));
@@ -44,12 +44,7 @@ const LoginPage: React.FC = () => {
     if (touched.password) {
       setErrors(prev => ({ ...prev, password: validateField('password', password) }));
     }
-    
-    // Clear login error when user starts typing
-    if (loginError && (touched.email || touched.password)) {
-      setLoginError('');
-    }
-  }, [email, password, touched, loginError]);
+  }, [email, password, touched]);
 
   const isFormValid = !errors.email && !errors.password && email.trim() !== '' && password !== '';
 
@@ -74,12 +69,14 @@ const LoginPage: React.FC = () => {
       if (!success) {
         console.log('Login failed, setting error message');
         setLoginError('Invalid email or password. Please check your credentials and try again.');
+        setPassword('');
       } else {
         console.log('Login successful');
       }
     } catch (error) {
       console.log('Login threw an exception:', error);
       setLoginError('Login failed. Please try again.');
+      setPassword('');
     } finally {
       setIsSubmitting(false);
     }
@@ -154,8 +151,8 @@ const LoginPage: React.FC = () => {
                     : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
                 }`}
                 placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); if (loginError) setLoginError(''); }}
                 onBlur={() => handleBlur('email')}
                 disabled={isLoading}
               />
@@ -181,8 +178,8 @@ const LoginPage: React.FC = () => {
                     : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
                 }`}
                 placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); if (loginError) setLoginError(''); }}
                 onBlur={() => handleBlur('password')}
                 disabled={isLoading}
               />

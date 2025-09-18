@@ -49,9 +49,19 @@ class ApiService {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
+          const token = localStorage.getItem('authToken');
+          const requestUrl: string = error.config?.url || '';
+          const isAuthEndpoint =
+            requestUrl.includes('/auth/login') ||
+            requestUrl.includes('/auth/register') ||
+            requestUrl.includes('/auth/validate-token');
+
+          // If a token exists and the 401 is not from auth endpoints, just clear storage.
+          // Routing components will handle access control without forcing a full-page reload here.
+          if (token && !isAuthEndpoint) {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+          }
         }
         return Promise.reject(error);
       }

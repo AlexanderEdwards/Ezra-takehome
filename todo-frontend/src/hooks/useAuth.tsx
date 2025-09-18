@@ -6,7 +6,8 @@ import toast from 'react-hot-toast';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
+  isInitializing: boolean; // true only while validating existing session on app start
+  isLoading: boolean;      // true during auth actions like login/register
   login: (credentials: LoginRequest) => Promise<boolean>;
   register: (userData: RegisterRequest) => Promise<boolean>;
   logout: () => void;
@@ -28,7 +29,8 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -46,7 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.removeItem('user');
         }
       }
-      setIsLoading(false);
+      setIsInitializing(false);
     };
 
     initializeAuth();
@@ -106,6 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
+    isInitializing,
     isLoading,
     login,
     register,
