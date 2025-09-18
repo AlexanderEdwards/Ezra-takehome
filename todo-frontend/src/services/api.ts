@@ -141,7 +141,17 @@ class ApiService {
   }
 
   async deleteTodo(id: number): Promise<void> {
-    await this.api.delete(`/todo/${id}`);
+    console.log('API deleteTodo called with ID:', id);
+    console.log('Auth token:', localStorage.getItem('authToken'));
+    console.log('API Base URL:', API_BASE_URL);
+    try {
+      const response = await this.api.delete(`/todo/${id}`);
+      console.log('Delete API response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Delete API error:', error);
+      throw error;
+    }
   }
 
   async toggleTodoCompletion(id: number): Promise<void> {

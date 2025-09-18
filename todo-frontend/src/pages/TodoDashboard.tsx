@@ -92,7 +92,7 @@ const TodoDashboard: React.FC = () => {
   });
 
   const toggleMutation = useMutation({
-    mutationFn: apiService.toggleTodoCompletion,
+    mutationFn: (id: number) => apiService.toggleTodoCompletion(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       queryClient.invalidateQueries({ queryKey: ['todo-stats'] });
@@ -103,13 +103,15 @@ const TodoDashboard: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: apiService.deleteTodo,
+    mutationFn: (id: number) => apiService.deleteTodo(id),
     onSuccess: () => {
+      console.log('Delete mutation successful');
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       queryClient.invalidateQueries({ queryKey: ['todo-stats'] });
       toast.success('Todo deleted successfully!');
     },
     onError: (error: any) => {
+      console.error('Delete mutation error:', error);
       toast.error(error.response?.data?.message || 'Failed to delete todo');
     }
   });
@@ -421,7 +423,10 @@ const TodoDashboard: React.FC = () => {
                       ✏️
                     </button>
                     <button
-                      onClick={() => deleteMutation.mutate(todo.id)}
+                      onClick={() => {
+                        console.log('Delete button clicked for todo ID:', todo.id);
+                        deleteMutation.mutate(todo.id);
+                      }}
                       className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                       disabled={deleteMutation.isPending}
                     >
