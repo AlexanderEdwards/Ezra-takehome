@@ -45,17 +45,55 @@ A comprehensive todo management application built with .NET Core Web API backend
 
 ## ⚡ Quick Start
 
-1. **Trust HTTPS Certificate**: `dotnet dev-certs https --trust`
-2. **Start API**: `cd TodoApi && dotnet run`
-3. **Start Frontend**: `cd todo-frontend && npm install && npm start`
-4. **Login**: Use `admin@todoapp.com` / `Admin123!`
+1. **Install .NET 9.0 SDK**: [Download here](https://dotnet.microsoft.com/download/dotnet/9.0) or see [GETTING_STARTED.md](GETTING_STARTED.md)
+2. **Trust HTTPS Certificate**: `dotnet dev-certs https --trust`
+3. **Start API**: `cd TodoApi && dotnet run`
+4. **Start Frontend**: `cd todo-frontend && npm install && npm start`
+5. **Login**: Use `admin@todoapp.com` / `Admin123!`
 
 ## 🛠️ Detailed Setup Instructions
 
 ### Prerequisites
-- .NET 9.0 SDK
-- Node.js 18+ and npm
-- Git
+- **.NET 9.0 SDK** - [Download from Microsoft](https://dotnet.microsoft.com/download/dotnet/9.0)
+- **Node.js 18+ and npm** - [Download from Node.js](https://nodejs.org/)
+- **Git** - [Download from Git](https://git-scm.com/)
+
+#### Installing .NET 9.0 SDK
+
+**Windows/macOS:**
+1. Visit [https://dotnet.microsoft.com/download/dotnet/9.0](https://dotnet.microsoft.com/download/dotnet/9.0)
+2. Download and install the .NET 9.0 SDK (not just the runtime)
+3. Verify installation: `dotnet --version` (should show 9.0.x)
+
+**Ubuntu/Debian Linux:**
+```bash
+# Add Microsoft package repository
+wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+sudo apt update
+
+# Install .NET 9.0 SDK
+sudo apt install -y dotnet-sdk-9.0
+
+# Verify installation
+dotnet --version
+```
+
+**Manual Installation (Linux/macOS):**
+```bash
+# Download and extract .NET 9.0 SDK
+cd ~
+wget https://download.visualstudio.microsoft.com/download/pr/5226a5fa-8c0b-474f-b79a-8984ad7c5beb/3113ccbf789c9fd29972835f0f334b7a/dotnet-sdk-9.0.100-linux-x64.tar.gz
+mkdir -p $HOME/dotnet
+tar zxf dotnet-sdk-9.0.100-linux-x64.tar.gz -C $HOME/dotnet
+
+# Add to PATH (add to ~/.bashrc or ~/.zshrc for persistence)
+export DOTNET_ROOT=$HOME/dotnet
+export PATH=$HOME/dotnet:$PATH
+
+# Verify installation
+dotnet --version
+```
 
 ### Backend Setup
 
