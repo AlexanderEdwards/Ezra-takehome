@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { TodoItem, CreateTodoRequest, UpdateTodoRequest, Category, TodoQuery, Priority } from '../types';
@@ -12,6 +12,7 @@ const TodoDashboard: React.FC = () => {
   
   // State for filters and search
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -35,9 +36,18 @@ const TodoDashboard: React.FC = () => {
     dueDate?: string;
   }>({});
 
-  // Build query parameters
-  const queryParams: TodoQuery = {
-    search: searchTerm || undefined,
+  // Debounce search term to prevent excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Build query parameters (memoized to prevent unnecessary re-renders)
+  const queryParams: TodoQuery = useMemo(() => ({
+    search: debouncedSearchTerm || undefined,
     categoryId: selectedCategory ? parseInt(selectedCategory) : undefined,
     priority: priorityFilter ? Priority[priorityFilter as keyof typeof Priority] : undefined,
     isCompleted: statusFilter === 'completed' ? true : statusFilter === 'pending' ? false : undefined,
@@ -45,12 +55,15 @@ const TodoDashboard: React.FC = () => {
     sortDescending: sortOrder === 'desc',
     page: 1,
     pageSize: 50
-  };
+  }), [debouncedSearchTerm, selectedCategory, priorityFilter, statusFilter, sortBy, sortOrder]);
 
   // Queries
-  const { data: todosData, isLoading: todosLoading, error: todosError } = useQuery({
+  const { data: todosData, isLoading: todosLoading, error: todosError, isFetching } = useQuery({
     queryKey: ['todos', queryParams],
-    queryFn: () => apiService.getTodos(queryParams)
+    queryFn: () => apiService.getTodos(queryParams),
+    staleTime: 1000, // Consider data fresh for 1 second
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data to prevent flickering
   });
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -209,7 +222,8 @@ const TodoDashboard: React.FC = () => {
 
   const getCategoryById = (id: number) => categories?.find((cat: Category) => cat.id === id);
 
-  if (todosLoading || categoriesLoading) {
+  // Only show full loading spinner on initial load, not during searches
+  if ((todosLoading && !todosData) || categoriesLoading) {
     return <LoadingSpinner />;
   }
 
@@ -224,7 +238,7 @@ const TodoDashboard: React.FC = () => {
     );
   }
 
-  const todos = todosData?.items || [];
+  const todos = (todosData as any)?.items || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -308,14 +322,36 @@ const TodoDashboard: React.FC = () => {
             {/* Search */}
             <div className="lg:col-span-2">
               <div className="relative">
-                <span className="absolute left-3 top-3 text-gray-400">🔍</span>
+                <span className="absolute left-3 top-3 text-gray-400">
+                  {isFetching && searchTerm ? (
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    '🔍'
+                  )}
+                </span>
                 <input
                   type="text"
                   placeholder="Search todos..."
-                  className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className={`pl-10 pr-4 w-full rounded-md shadow-sm focus:ring-primary-500 transition-colors ${
+                    isFetching && searchTerm 
+                      ? 'border-blue-300 focus:border-blue-500' 
+                      : 'border-gray-300 focus:border-primary-500'
+                  }`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             </div>
 
@@ -396,12 +432,34 @@ const TodoDashboard: React.FC = () => {
         </div>
 
         {/* Todos List */}
-        <div className="space-y-4">
+        <div className="space-y-4 relative">
+          {/* Subtle loading overlay for search */}
+          {isFetching && todosData && (
+            <div className="absolute top-0 left-0 right-0 bg-blue-50 border border-blue-200 rounded-lg p-2 z-10">
+              <div className="flex items-center justify-center text-sm text-blue-700">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Searching...
+              </div>
+            </div>
+          )}
+          
           {todos.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-12 text-center">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No todos found</h3>
-              <p className="text-gray-600">Get started by creating your first todo!</p>
+              <div className="text-6xl mb-4">
+                {searchTerm || selectedCategory || priorityFilter || statusFilter ? '🔍' : '📝'}
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {searchTerm || selectedCategory || priorityFilter || statusFilter ? 'No matching todos found' : 'No todos found'}
+              </h3>
+              <p className="text-gray-600">
+                {searchTerm || selectedCategory || priorityFilter || statusFilter 
+                  ? 'Try adjusting your search filters or create a new todo.'
+                  : 'Get started by creating your first todo!'
+                }
+              </p>
             </div>
           ) : (
             todos.map((todo: TodoItem) => (
