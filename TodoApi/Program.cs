@@ -143,8 +143,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Use HTTPS redirection (disabled for HTTP fallback testing)
-// app.UseHttpsRedirection();
+// Use HTTPS redirection
+app.UseHttpsRedirection();
 
 app.UseCors("AllowReactApp");
 
