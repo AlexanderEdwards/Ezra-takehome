@@ -19,6 +19,10 @@ const TodoDashboard: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20); // Fixed page size for now
+  
   // State for modal and forms
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
@@ -45,6 +49,11 @@ const TodoDashboard: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, selectedCategory, priorityFilter, statusFilter, sortBy, sortOrder]);
+
   // Build query parameters (memoized to prevent unnecessary re-renders)
   const queryParams: TodoQuery = useMemo(() => ({
     search: debouncedSearchTerm || undefined,
@@ -53,9 +62,9 @@ const TodoDashboard: React.FC = () => {
     isCompleted: statusFilter === 'completed' ? true : statusFilter === 'pending' ? false : undefined,
     sortBy: sortBy,
     sortDescending: sortOrder === 'desc',
-    page: 1,
-    pageSize: 50
-  }), [debouncedSearchTerm, selectedCategory, priorityFilter, statusFilter, sortBy, sortOrder]);
+    page: currentPage,
+    pageSize: pageSize
+  }), [debouncedSearchTerm, selectedCategory, priorityFilter, statusFilter, sortBy, sortOrder, currentPage, pageSize]);
 
   // Queries
   const { data: todosData, isLoading: todosLoading, error: todosError, isFetching } = useQuery({
@@ -540,6 +549,109 @@ const TodoDashboard: React.FC = () => {
             ))
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {todosData && todosData.totalPages > 1 && (
+          <div className="bg-white rounded-lg shadow p-4 mt-6">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing <span className="font-medium">{((currentPage - 1) * pageSize) + 1}</span> to{' '}
+                <span className="font-medium">
+                  {Math.min(currentPage * pageSize, todosData.totalCount)}
+                </span>{' '}
+                of <span className="font-medium">{todosData.totalCount}</span> results
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentPage === 1
+                      ? 'text-gray-400 cursor-not-allowed bg-gray-100'
+                      : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  ← Previous
+                </button>
+                
+                <div className="flex items-center space-x-1">
+                  {/* Page numbers */}
+                  {Array.from({ length: Math.min(5, todosData.totalPages) }, (_, i) => {
+                    let pageNumber: number;
+                    if (todosData.totalPages <= 5) {
+                      pageNumber = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNumber = i + 1;
+                    } else if (currentPage >= todosData.totalPages - 2) {
+                      pageNumber = todosData.totalPages - 4 + i;
+                    } else {
+                      pageNumber = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          currentPage === pageNumber
+                            ? 'bg-primary-600 text-white'
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                  
+                  {todosData.totalPages > 5 && currentPage < todosData.totalPages - 2 && (
+                    <>
+                      <span className="px-2 text-gray-500">...</span>
+                      <button
+                        onClick={() => setCurrentPage(todosData.totalPages)}
+                        className="px-3 py-2 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
+                      >
+                        {todosData.totalPages}
+                      </button>
+                    </>
+                  )}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === todosData.totalPages}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentPage === todosData.totalPages
+                      ? 'text-gray-400 cursor-not-allowed bg-gray-100'
+                      : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+            
+            {/* Page size selector */}
+            <div className="mt-4 flex items-center justify-center">
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <span>Items per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    // For now, this is disabled since pageSize is const
+                    // In the future, you could make pageSize a state variable
+                  }}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  disabled
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Create Todo Modal */}
         {isCreateModalOpen && (

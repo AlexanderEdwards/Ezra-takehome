@@ -110,6 +110,7 @@ builder.Services.AddSwaggerGen(c =>
 // Register application services
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ITodoService, TodoService>();
+builder.Services.AddScoped<DatabaseSeeder>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -156,53 +157,15 @@ app.MapControllers();
 // Ensure database is created and seeded
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
     
     try
     {
-        context.Database.EnsureCreated();
-        
-        // Seed default admin user if none exists
-        if (!await userManager.Users.AnyAsync())
-        {
-            var adminUser = new User
-            {
-                UserName = "admin@todoapp.com",
-                Email = "admin@todoapp.com",
-                FirstName = "Admin",
-                LastName = "User",
-                EmailConfirmed = true
-            };
-            
-            await userManager.CreateAsync(adminUser, "Admin123!");
-            
-            // Create some default categories
-            var workCategory = new Category
-            {
-                Name = "Work",
-                Description = "Work-related tasks",
-                Color = "#3B82F6",
-                UserId = adminUser.Id
-            };
-            
-            var personalCategory = new Category
-            {
-                Name = "Personal",
-                Description = "Personal tasks and reminders",
-                Color = "#10B981",
-                UserId = adminUser.Id
-            };
-            
-            context.Categories.AddRange(workCategory, personalCategory);
-            await context.SaveChangesAsync();
-            
-            Log.Information("Default admin user and categories created");
-        }
+        await seeder.SeedAsync();
     }
     catch (Exception ex)
     {
-        Log.Error(ex, "An error occurred while creating/seeding the database");
+        Log.Error(ex, "An error occurred while seeding the database");
     }
 }
 
