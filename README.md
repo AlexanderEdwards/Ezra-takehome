@@ -320,18 +320,4 @@ dotnet --version
 3. **End-to-End Tests**: Complete user workflows
 4. **Performance Tests**: Load testing for API endpoints
 
-## 📝 Development Notes
-
-### Code Style
-- C# follows Microsoft naming conventions
-- TypeScript uses ESLint and Prettier (recommended)
-- Consistent error handling patterns
-- Comprehensive logging throughout the application
-
-### Key Assumptions
-1. Single-tenant application (each user sees only their data)
-2. English-only interface (no internationalization)
-3. Desktop-first design (mobile-responsive but not mobile-first)
-4. Moderate user load (< 1000 concurrent users)
-
 This application demonstrates a solid foundation for a production todo management system with room for extensive enhancement and scaling.
