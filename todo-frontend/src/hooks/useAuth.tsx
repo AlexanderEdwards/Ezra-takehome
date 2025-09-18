@@ -53,9 +53,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (credentials: LoginRequest): Promise<boolean> => {
+    console.log('useAuth login called with:', credentials);
     try {
       setIsLoading(true);
+      console.log('Calling apiService.login...');
       const response = await apiService.login(credentials);
+      console.log('apiService.login successful, response:', response);
       
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
@@ -64,8 +67,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       toast.success('Welcome back!');
       return true;
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Login failed. Please try again.';
-      toast.error(message);
+      // Don't show toast error - let the login form handle error display
+      console.error('Login error in useAuth:', error);
+      console.log('Error response:', error.response);
       return false;
     } finally {
       setIsLoading(false);

@@ -5,7 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('admin@todoapp.com');
-  const [password, setPassword] = useState('Admin123!');
+  const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({
     email: '',
     password: '',
@@ -14,6 +14,8 @@ const LoginPage: React.FC = () => {
     email: false,
     password: false,
   });
+  const [loginError, setLoginError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, isLoading } = useAuth();
 
   // Validation functions
@@ -34,7 +36,7 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  // Real-time validation
+  // Real-time validation and clear login errors when user types
   useEffect(() => {
     if (touched.email) {
       setErrors(prev => ({ ...prev, email: validateField('email', email) }));
@@ -42,7 +44,12 @@ const LoginPage: React.FC = () => {
     if (touched.password) {
       setErrors(prev => ({ ...prev, password: validateField('password', password) }));
     }
-  }, [email, password, touched]);
+    
+    // Clear login error when user starts typing
+    if (loginError && (touched.email || touched.password)) {
+      setLoginError('');
+    }
+  }, [email, password, touched, loginError]);
 
   const isFormValid = !errors.email && !errors.password && email.trim() !== '' && password !== '';
 
@@ -52,7 +59,30 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login({ email, password });
+    
+    console.log('Login form submitted with:', { email, password });
+    
+    // Clear previous login error
+    setLoginError('');
+    setIsSubmitting(true);
+    
+    try {
+      console.log('Calling login function...');
+      const success = await login({ email, password });
+      console.log('Login function returned:', success);
+      
+      if (!success) {
+        console.log('Login failed, setting error message');
+        setLoginError('Invalid email or password. Please check your credentials and try again.');
+      } else {
+        console.log('Login successful');
+      }
+    } catch (error) {
+      console.log('Login threw an exception:', error);
+      setLoginError('Login failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -73,6 +103,38 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {/* Login Error Alert */}
+          {loginError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium">Login Failed</h3>
+                  <div className="mt-1 text-sm">
+                    {loginError}
+                  </div>
+                </div>
+                <div className="ml-auto pl-3">
+                  <div className="-mx-1.5 -my-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setLoginError('')}
+                      className="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
+                    >
+                      <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -133,10 +195,10 @@ const LoginPage: React.FC = () => {
           <div>
             <button
               type="submit"
-              disabled={isLoading || !isFormValid}
+              disabled={isLoading || isSubmitting || !isFormValid}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
+              {isLoading || isSubmitting ? (
                 <LoadingSpinner size="sm" />
               ) : (
                 'Sign in'
